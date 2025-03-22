@@ -19,12 +19,12 @@ https://github.com/user-attachments/assets/e89fe22b-d1a3-464b-ac44-53f7372cb46f
 ```lua
 -- pretty-ts-errors.lua
 return {
- {
-  "yym/pretty-ts-errors.nvim",
+  {
+    "youyoumu/pretty-ts-errors.nvim",
     opts = {
       -- your configuration options
-    }
- },
+    },
+  },
 }
 ```
 
