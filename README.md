@@ -81,14 +81,11 @@ The plugin intercepts TypeScript diagnostics from the LSP server and passes them
 
 This project is powered by and inspired by:
 
-- pretty-ts-errors - The original VS Code extension that improves TypeScript error messages
-- pretty-ts-errors-markdown - A fork of pretty-ts-errors that outputs errors in markdown format, which this plugin uses as a CLI dependency
+- [pretty-ts-errors](https://github.com/yoavbls/pretty-ts-errors) - The original VS Code extension that improves TypeScript error messages
+- [pretty-ts-errors-markdown](https://github.com/hexh250786313/pretty-ts-errors-markdown) - A fork of pretty-ts-errors that outputs errors in markdown format, which this plugin uses as a CLI dependency
 
 Thanks to the original authors for creating these fantastic tools that make working with TypeScript more pleasant!
 
-## License
-
-MIT
 
 ## Contributing
 
