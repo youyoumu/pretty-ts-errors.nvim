@@ -141,6 +141,18 @@ function M.show_formatted_error()
 	local win = api.nvim_open_win(floating_buf, false, opts)
 	floating_win_visible = true
 
+	-- Add 'q' key mapping to close the window
+	api.nvim_buf_set_keymap(floating_buf, "n", "q", "", {
+		noremap = true,
+		silent = true,
+		callback = function()
+			if api.nvim_win_is_valid(win) then
+				api.nvim_win_close(win, true)
+				floating_win_visible = false
+			end
+		end,
+	})
+
 	-- Set up an autocmd to reset `floating_win_visible` when the floating window is closed
 	api.nvim_create_autocmd("WinClosed", {
 		pattern = tostring(win), -- Trigger when this specific window is closed
