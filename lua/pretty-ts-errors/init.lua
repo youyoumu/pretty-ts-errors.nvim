@@ -34,9 +34,12 @@ local function update_buffer(buf, contents)
 	end
 end
 
+local function is_ts_source(source)
+	return source == "tsserver" or source == "ts"
+end
+
 local function format_error_async(diagnostic, callback)
-	-- Skip if not from tsserver
-	if diagnostic.source ~= "tsserver" then
+	if not is_ts_source(diagnostic.source) then
 		callback(nil)
 		return
 	end
@@ -102,7 +105,7 @@ function M.show_formatted_error()
 	local current_line = api.nvim_win_get_cursor(0)[1] - 1
 	local ts_diagnostics = {}
 	for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = current_line })) do
-		if diagnostic.source == "tsserver" then
+		if is_ts_source(diagnostic.source) then
 			table.insert(ts_diagnostics, diagnostic)
 		end
 	end
@@ -220,7 +223,7 @@ function M.open_all_errors()
 	local ts_diagnostics = {}
 
 	for _, diagnostic in ipairs(all_diagnostics) do
-		if diagnostic.source == "tsserver" then
+		if is_ts_source(diagnostic.source) then
 			table.insert(ts_diagnostics, diagnostic)
 		end
 	end
@@ -300,7 +303,7 @@ function M.enable_auto_open()
 			local has_ts_error = false
 
 			for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = line })) do
-				if diagnostic.source == "tsserver" then
+				if is_ts_source(diagnostic.source) then
 					has_ts_error = true
 					break
 				end
