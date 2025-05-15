@@ -137,6 +137,15 @@ function M.show_formatted_error()
 		end)
 	end
 
+	-- HACK: render-markdown.nvim doesn't render the markdown in floating window until the floating window become focused,
+	-- so we re-execute the command to trigger the rendering.
+	if pcall(require, "render-markdown.state") then
+		local render_markdown_state = require("render-markdown.state")
+		if render_markdown_state.enabled then
+			vim.cmd("RenderMarkdown enable")
+		end
+	end
+
 	return win, floating_buf
 end
 
