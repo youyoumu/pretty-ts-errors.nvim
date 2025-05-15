@@ -2,28 +2,9 @@ local M = {}
 local api = vim.api
 
 local config = require("pretty-ts-errors.config")
-
--- for debugging
-local function log_to_file(msg)
-	local log_file = "/tmp/nvim_plugin.log" -- Change this path as needed
-	local file = io.open(log_file, "a") -- Open file in append mode
-	if file then
-		file:write(os.date("[%Y-%m-%d %H:%M:%S] ") .. msg .. "\n")
-		file:close()
-	else
-		vim.api.nvim_echo({ { "Failed to open log file: " .. log_file, "ErrorMsg" } }, true, {})
-	end
-end
+local utils = require("pretty-ts-errors.utils")
 
 local cache = {}
-
-local function update_buffer(buf, contents)
-	if api.nvim_buf_is_valid(buf) then
-		api.nvim_set_option_value("modifiable", true, { buf = buf })
-		api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(contents, "\n"))
-		api.nvim_set_option_value("modifiable", false, { buf = buf })
-	end
-end
 
 local function is_ts_source(source)
 	return source == "tsserver" or source == "ts"
@@ -192,7 +173,7 @@ function M.show_formatted_error()
 				end
 
 				-- Update the buffer after each error is processed
-				update_buffer(floating_buf, contents)
+				utils.update_buffer(floating_buf, contents)
 
 				-- Recalculate window size for formatted content
 				local lines = vim.split(contents, "\n")
@@ -278,7 +259,7 @@ function M.open_all_errors()
 				end
 
 				-- Update the buffer after each error is processed
-				update_buffer(buf, contents)
+				utils.update_buffer(buf, contents)
 
 				-- When all diagnostics are processed, finalize the buffer
 				if processed_count == #ts_diagnostics then
