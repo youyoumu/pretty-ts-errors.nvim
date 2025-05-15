@@ -7,6 +7,7 @@ A Neovim plugin that enhances TypeScript errors by formatting them into readable
 ## Requirements
 
 - `pretty-ts-errors-markdown` executable in PATH ([install instructions](#installing-the-cli-tool))
+- Optional: [render-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim) plugin for enhanced markdown rendering (if installed, it will be used automatically)
 
 ## Installation
 
