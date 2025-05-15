@@ -51,6 +51,7 @@ function M.show_formatted_error()
 
 	-- Open floating window immediately with loading message
 	local win = api.nvim_open_win(floating_buf, false, opts)
+	api.nvim_set_option_value("wrap", config.get().float_opts.wrap, { win = win })
 	floating_win_visible = true
 
 	-- Add 'q' key mapping to close the window

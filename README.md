@@ -2,11 +2,7 @@
 
 A Neovim plugin that enhances TypeScript errors by formatting them into readable, markdown-formatted.
 
-
-
-https://github.com/user-attachments/assets/e89fe22b-d1a3-464b-ac44-53f7372cb46f
-
-
+<https://github.com/user-attachments/assets/e89fe22b-d1a3-464b-ac44-53f7372cb46f>
 
 ## Requirements
 
@@ -47,6 +43,7 @@ Here's the default configuration:
     border = "rounded",        -- Border style for floating windows
     max_width = 80,            -- Maximum width of floating windows
     max_height = 20,           -- Maximum height of floating windows
+    wrap = false,              -- Whether to wrap long lines
   },
   auto_open = true,            -- Automatically show errors on hover
 }
@@ -89,7 +86,6 @@ This project is powered by and inspired by:
 - [pretty-ts-errors-markdown](https://github.com/hexh250786313/pretty-ts-errors-markdown) - A fork of pretty-ts-errors that outputs errors in markdown format, which this plugin uses as a CLI dependency
 
 Thanks to the original authors for creating these fantastic tools that make working with TypeScript more pleasant!
-
 
 ## Contributing
 

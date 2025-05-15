@@ -6,6 +6,7 @@ M.config = {
 		border = "rounded",
 		max_width = 80,
 		max_height = 20,
+		wrap = false,
 	},
 	auto_open = true,
 }
