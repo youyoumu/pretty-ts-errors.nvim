@@ -10,6 +10,7 @@ M.config = {
 	auto_open = true,
 }
 
+-- Merge user options with defaults
 function M.setup(opts)
 	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
