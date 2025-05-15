@@ -1,28 +1,19 @@
 local M = {}
 local api = vim.api
 
--- for debugging
--- local function log_to_file(msg)
---   local log_file = "/tmp/nvim_plugin.log" -- Change this path as needed
---   local file = io.open(log_file, "a") -- Open file in append mode
---   if file then
---     file:write(os.date("[%Y-%m-%d %H:%M:%S] ") .. msg .. "\n")
---     file:close()
---   else
---     vim.api.nvim_echo({ { "Failed to open log file: " .. log_file, "ErrorMsg" } }, true, {})
---   end
--- end
+local config = require("pretty-ts-errors.config")
 
--- Configure plugin options with defaults
-M.config = {
-	executable = "pretty-ts-errors-markdown",
-	float_opts = {
-		border = "rounded",
-		max_width = 80,
-		max_height = 20,
-	},
-	auto_open = true,
-}
+-- for debugging
+local function log_to_file(msg)
+	local log_file = "/tmp/nvim_plugin.log" -- Change this path as needed
+	local file = io.open(log_file, "a") -- Open file in append mode
+	if file then
+		file:write(os.date("[%Y-%m-%d %H:%M:%S] ") .. msg .. "\n")
+		file:close()
+	else
+		vim.api.nvim_echo({ { "Failed to open log file: " .. log_file, "ErrorMsg" } }, true, {})
+	end
+end
 
 local cache = {}
 
@@ -55,7 +46,7 @@ local function format_error_async(diagnostic, callback)
 
 	-- Convert to JSON string and escape for shell
 	local json_str = vim.fn.json_encode(lsp_data)
-	local cmd = M.config.executable
+	local cmd = config.get().executable
 
 	-- Use jobstart to run command asynchronously
 	local job_id = vim.fn.jobstart(cmd, {
@@ -134,7 +125,7 @@ function M.show_formatted_error()
 		row = 1,
 		col = 0,
 		style = "minimal",
-		border = M.config.float_opts.border,
+		border = config.get().float_opts.border,
 	}
 
 	-- Open floating window immediately with loading message
@@ -209,8 +200,8 @@ function M.show_formatted_error()
 				for _, line in ipairs(lines) do
 					width = math.max(width, #line)
 				end
-				width = math.min(width, M.config.float_opts.max_width)
-				local height = math.min(#lines, M.config.float_opts.max_height)
+				width = math.min(width, config.get().float_opts.max_width)
+				local height = math.min(#lines, config.get().float_opts.max_height)
 
 				-- Resize the window with new content
 				api.nvim_win_set_config(win, {
@@ -330,13 +321,13 @@ end
 
 function M.toggle_auto_open()
 	-- Toggle the auto_open setting
-	M.config.auto_open = not M.config.auto_open
+	config.get().auto_open = not config.get().auto_open
 
 	-- Clear existing autocommand group if it exists
 	api.nvim_create_augroup("PrettyTsErrorsAuto", { clear = true })
 
 	-- If auto_open is now enabled, recreate the autocommands
-	if M.config.auto_open then
+	if config.get().auto_open then
 		M.enable_auto_open()
 		vim.notify("TypeScript error auto-display on hover: Enabled", vim.log.levels.INFO)
 	else
@@ -347,7 +338,7 @@ end
 -- Setup function to initialize the plugin
 function M.setup(opts)
 	-- Merge user options with defaults
-	M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+	config.setup(opts)
 
 	api.nvim_create_user_command("PrettyTsError", function()
 		M.show_formatted_error()
@@ -361,7 +352,7 @@ function M.setup(opts)
 		M.toggle_auto_open()
 	end, {})
 
-	if M.config.auto_open then
+	if config.get().auto_open then
 		M.enable_auto_open()
 	end
 end
