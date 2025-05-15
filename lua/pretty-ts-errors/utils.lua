@@ -20,4 +20,8 @@ function M.update_buffer(buf, contents)
 	end
 end
 
+function M.is_ts_source(source)
+	return source == "tsserver" or source == "ts"
+end
+
 return M

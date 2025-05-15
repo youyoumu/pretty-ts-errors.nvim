@@ -3,67 +3,7 @@ local api = vim.api
 
 local config = require("pretty-ts-errors.config")
 local utils = require("pretty-ts-errors.utils")
-
-local cache = {}
-
-local function is_ts_source(source)
-	return source == "tsserver" or source == "ts"
-end
-
-local function format_error_async(diagnostic, callback)
-	if not is_ts_source(diagnostic.source) then
-		callback(nil)
-		return
-	end
-
-	-- Check cache first
-	local cache_key = diagnostic.code .. diagnostic.message
-	if cache[cache_key] then
-		callback(cache[cache_key])
-		return
-	end
-
-	local lsp_data = diagnostic.user_data.lsp
-
-	-- Convert to JSON string and escape for shell
-	local json_str = vim.fn.json_encode(lsp_data)
-	local cmd = config.get().executable
-
-	-- Use jobstart to run command asynchronously
-	local job_id = vim.fn.jobstart(cmd, {
-		on_stdout = function(_, data)
-			if not data or #data < 1 or (data[1] == "" and #data == 1) then
-				return
-			end
-
-			local result = table.concat(data, "\n")
-			-- Cache the result
-			cache[cache_key] = result
-			callback(result)
-		end,
-		on_stderr = function(_, data)
-			if not data or #data < 1 or (data[1] == "" and #data == 1) then
-				return
-			end
-
-			local error_msg = table.concat(data, "\n")
-			vim.schedule(function()
-				vim.notify("Error formatting TypeScript error: " .. error_msg, vim.log.levels.ERROR)
-			end)
-			callback(nil)
-		end,
-		on_exit = function(_, code)
-			if code ~= 0 then
-				vim.schedule(function()
-					vim.notify("Failed to format TypeScript error. Exit code: " .. code, vim.log.levels.ERROR)
-				end)
-				callback(nil)
-			end
-		end,
-	})
-	vim.fn.chansend(job_id, json_str)
-	vim.fn.chanclose(job_id, "stdin")
-end
+local format = require("pretty-ts-errors.format")
 
 local floating_win_visible = false
 -- get errors under the cursor and show formatted error as floating window near the cursor
@@ -77,7 +17,7 @@ function M.show_formatted_error()
 	local current_line = api.nvim_win_get_cursor(0)[1] - 1
 	local ts_diagnostics = {}
 	for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = current_line })) do
-		if is_ts_source(diagnostic.source) then
+		if utils.is_ts_source(diagnostic.source) then
 			table.insert(ts_diagnostics, diagnostic)
 		end
 	end
@@ -157,7 +97,7 @@ function M.show_formatted_error()
 
 	for _, diagnostic in ipairs(ts_diagnostics) do
 		-- Format the diagnostic asynchronously
-		format_error_async(diagnostic, function(formatted)
+		format.format_error_async(diagnostic, function(formatted)
 			-- This callback runs when the formatting is complete
 			vim.schedule(function()
 				-- Make sure window is still valid
@@ -207,7 +147,7 @@ function M.open_all_errors()
 	local ts_diagnostics = {}
 
 	for _, diagnostic in ipairs(all_diagnostics) do
-		if is_ts_source(diagnostic.source) then
+		if utils.is_ts_source(diagnostic.source) then
 			table.insert(ts_diagnostics, diagnostic)
 		end
 	end
@@ -242,7 +182,7 @@ function M.open_all_errors()
 
 	-- Process each diagnostic asynchronously
 	for i, diagnostic in ipairs(ts_diagnostics) do
-		format_error_async(diagnostic, function(formatted)
+		format.format_error_async(diagnostic, function(formatted)
 			vim.schedule(function()
 				processed_count = processed_count + 1
 
@@ -287,7 +227,7 @@ function M.enable_auto_open()
 			local has_ts_error = false
 
 			for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = line })) do
-				if is_ts_source(diagnostic.source) then
+				if utils.is_ts_source(diagnostic.source) then
 					has_ts_error = true
 					break
 				end
