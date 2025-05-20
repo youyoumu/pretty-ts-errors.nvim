@@ -21,7 +21,8 @@ function M.format_error_async(diagnostic, callback)
 
 	-- Convert to JSON string and escape for shell
 	local json_str = vim.fn.json_encode(lsp_data)
-	local cmd = config.get().executable
+	local raw_cmd = config.get().executable
+	local cmd = utils.normalize_cmd(raw_cmd)
 
 	-- Use jobstart to run command asynchronously
 	local job_id = vim.fn.jobstart(cmd, {
