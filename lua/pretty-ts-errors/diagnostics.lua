@@ -6,10 +6,13 @@ local format = require("pretty-ts-errors.format")
 local api = vim.api
 
 local floating_win_visible = false
+local floating_win_id = nil
+
 -- get errors under the cursor and show formatted error as floating window near the cursor
 function M.show_formatted_error()
-	-- If we already have a floating window open, don't create another one
-	if floating_win_visible then
+	-- If a floating window is already open, focus it instead of creating a new one
+	if floating_win_visible and floating_win_id ~= nil then
+		vim.api.nvim_set_current_win(floating_win_id)
 		return
 	end
 
@@ -53,6 +56,7 @@ function M.show_formatted_error()
 	local win = api.nvim_open_win(floating_buf, false, opts)
 	api.nvim_set_option_value("wrap", config.get().float_opts.wrap, { win = win })
 	floating_win_visible = true
+	floating_win_id = win
 
 	-- Add 'q' key mapping to close the window
 	api.nvim_buf_set_keymap(floating_buf, "n", "q", "", {
@@ -62,6 +66,7 @@ function M.show_formatted_error()
 			if api.nvim_win_is_valid(win) then
 				api.nvim_win_close(win, true)
 				floating_win_visible = false
+				floating_win_id = nil
 			end
 		end,
 	})
@@ -71,6 +76,7 @@ function M.show_formatted_error()
 		pattern = tostring(win), -- Trigger when this specific window is closed
 		callback = function()
 			floating_win_visible = false
+			floating_win_id = nil
 		end,
 	})
 
@@ -88,6 +94,7 @@ function M.show_formatted_error()
 				if api.nvim_win_is_valid(win) then
 					api.nvim_win_close(win, true)
 					floating_win_visible = false
+					floating_win_id = nil
 					api.nvim_del_augroup_by_id(group)
 				end
 			end,
@@ -104,6 +111,7 @@ function M.show_formatted_error()
 				-- Make sure window is still valid
 				if not api.nvim_win_is_valid(win) or not api.nvim_buf_is_valid(floating_buf) then
 					floating_win_visible = false
+					floating_win_id = nil
 					return
 				end
 
