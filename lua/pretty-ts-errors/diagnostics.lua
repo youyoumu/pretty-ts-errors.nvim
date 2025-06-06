@@ -9,10 +9,15 @@ local floating_win_visible = false
 local floating_win_id = nil
 
 -- get errors under the cursor and show formatted error as floating window near the cursor
-function M.show_formatted_error()
+function M.show_formatted_error(opts)
+	opts = opts or {}
+	opts.focus_existing_window = opts.focus_existing_window or true
+
 	-- If a floating window is already open, focus it instead of creating a new one
-	if floating_win_visible and floating_win_id ~= nil then
-		vim.api.nvim_set_current_win(floating_win_id)
+	if floating_win_visible then
+		if opts.focus_existing_window and floating_win_id ~= nil then
+			vim.api.nvim_set_current_win(floating_win_id)
+		end
 		return
 	end
 
@@ -252,7 +257,7 @@ function M.enable_auto_open()
 			end
 
 			if has_ts_error then
-				M.show_formatted_error()
+				M.show_formatted_error({ focus_existing_window = false })
 			end
 		end,
 	})
