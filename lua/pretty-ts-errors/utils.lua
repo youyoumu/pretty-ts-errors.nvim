@@ -31,7 +31,7 @@ function M.is_ts_source(source)
 end
 
 function M.is_windows()
-	return vim.loop.os_uname().version:match("Windows") ~= nil
+	return vim.uv.os_uname().sysname:match("Windows") ~= nil
 end
 
 -- Normalize command for jobstart on Windows (.cmd support)
