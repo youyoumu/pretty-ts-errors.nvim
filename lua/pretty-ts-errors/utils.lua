@@ -27,7 +27,29 @@ function M.update_buffer(buf, contents)
 end
 
 function M.is_ts_source(source)
-	return source == "tsserver" or source == "ts"
+	return vim.tbl_contains({ "tsserver", "ts", "typescript" }, source)
+end
+
+function M.is_windows()
+	return vim.uv.os_uname().sysname:match("Windows") ~= nil
+end
+
+-- Normalize command for jobstart on Windows (.cmd support)
+-- Accepts string or array of strings
+function M.normalize_cmd(cmd)
+	if type(cmd) == "string" then
+		cmd = { cmd }
+	end
+
+	if M.is_windows() then
+		local exe = cmd[1]
+
+		if not exe:match("%.cmd$") and vim.fn.executable(exe .. ".cmd") == 1 then
+			cmd[1] = exe .. ".cmd"
+		end
+	end
+
+	return cmd
 end
 
 return M
