@@ -9,6 +9,7 @@ M.config = {
 		wrap = false,
 	},
 	auto_open = true,
+	lazy_window = false,
 }
 
 -- Merge user options with defaults

@@ -5,8 +5,8 @@ local config = require("pretty-ts-errors.config")
 local diagnostics = require("pretty-ts-errors.diagnostics")
 
 -- prevent breaking changes
-function M.show_formatted_error()
-	diagnostics.show_formatted_error()
+function M.show_formatted_error(opts)
+	diagnostics.show_formatted_error(opts)
 end
 function M.open_all_errors()
 	diagnostics.open_all_errors()

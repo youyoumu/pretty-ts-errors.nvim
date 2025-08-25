@@ -47,6 +47,7 @@ Here's the default configuration:
     wrap = false,              -- Whether to wrap long lines
   },
   auto_open = true,            -- Automatically show errors on hover
+  lazy_window = false,         -- Open the floating window only after errors are formatted
 }
 ```
 

@@ -8,46 +8,8 @@ local api = vim.api
 local floating_win_visible = false
 local floating_win_id = nil
 
--- get errors under the cursor and show formatted error as floating window near the cursor
-function M.show_formatted_error(opts)
-	opts = opts or {}
-	opts.focus_existing_window = opts.focus_existing_window or true
-
-	-- If a floating window is already open, focus it instead of creating a new one
-	if floating_win_visible then
-		if opts.focus_existing_window and floating_win_id ~= nil then
-			vim.api.nvim_set_current_win(floating_win_id)
-		end
-		return
-	end
-
-	-- Get diagnostics under cursor
-	local current_line = api.nvim_win_get_cursor(0)[1] - 1
-	local ts_diagnostics = {}
-	for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = current_line })) do
-		if utils.is_ts_source(diagnostic.source) then
-			table.insert(ts_diagnostics, diagnostic)
-		end
-	end
-
-	if #ts_diagnostics == 0 then
-		vim.notify("No TypeScript errors under cursor", vim.log.levels.INFO)
-		return
-	end
-
-	local main_buf = api.nvim_get_current_buf()
-	local floating_buf = api.nvim_create_buf(false, true)
-	api.nvim_set_option_value("filetype", "markdown", { buf = floating_buf })
-
-	-- Add loading content to buffer
-	api.nvim_buf_set_lines(floating_buf, 0, -1, false, {
-		"# Loading TypeScript Error",
-		"",
-		"Please wait while the error is being formatted...",
-	})
-
-	-- Configure initial floating window
-	local opts = {
+local function init_window(main_buf, floating_buf)
+	local win_opts = {
 		relative = "cursor",
 		width = 50,
 		height = 5,
@@ -57,8 +19,7 @@ function M.show_formatted_error(opts)
 		border = config.get().float_opts.border,
 	}
 
-	-- Open floating window immediately with loading message
-	local win = api.nvim_open_win(floating_buf, false, opts)
+	local win = api.nvim_open_win(floating_buf, false, win_opts)
 	api.nvim_set_option_value("wrap", config.get().float_opts.wrap, { win = win })
 	floating_win_visible = true
 	floating_win_id = win
@@ -106,7 +67,56 @@ function M.show_formatted_error(opts)
 		})
 	end
 
+	return win
+end
+
+-- get errors under the cursor and show formatted error as floating window near the cursor
+function M.show_formatted_error(opts)
+	opts = opts or {}
+	opts.focus_existing_window = opts.focus_existing_window or true
+	opts.lazy_window = opts.lazy_window or config.get().lazy_window
+
+	-- If a floating window is already open, focus it instead of creating a new one
+	if floating_win_visible then
+		if opts.focus_existing_window and floating_win_id ~= nil then
+			vim.api.nvim_set_current_win(floating_win_id)
+		end
+		return
+	end
+
+	-- Get diagnostics under cursor
+	local current_line = api.nvim_win_get_cursor(0)[1] - 1
+	local ts_diagnostics = {}
+	for _, diagnostic in ipairs(vim.diagnostic.get(0, { lnum = current_line })) do
+		if utils.is_ts_source(diagnostic.source) then
+			table.insert(ts_diagnostics, diagnostic)
+		end
+	end
+
+	if #ts_diagnostics == 0 then
+		vim.notify("No TypeScript errors under cursor", vim.log.levels.INFO)
+		return
+	end
+
+	local main_buf = api.nvim_get_current_buf()
+	local floating_buf = api.nvim_create_buf(false, true)
+	api.nvim_set_option_value("filetype", "markdown", { buf = floating_buf })
+
+	local window = nil
+	if not opts.lazy_window then
+		-- Add loading content to buffer
+		api.nvim_buf_set_lines(floating_buf, 0, -1, false, {
+			"# Loading TypeScript Error",
+			"",
+			"Please wait while the error is being formatted...",
+		})
+
+		-- Configure initial floating window
+		window = init_window(main_buf, floating_buf)
+	end
+
 	local contents = ""
+	local resolved_count = 0
 
 	for _, diagnostic in ipairs(ts_diagnostics) do
 		-- Format the diagnostic asynchronously
@@ -114,7 +124,7 @@ function M.show_formatted_error(opts)
 			-- This callback runs when the formatting is complete
 			vim.schedule(function()
 				-- Make sure window is still valid
-				if not api.nvim_win_is_valid(win) or not api.nvim_buf_is_valid(floating_buf) then
+				if window ~= nil and not api.nvim_win_is_valid(window) or not api.nvim_buf_is_valid(floating_buf) then
 					floating_win_visible = false
 					floating_win_id = nil
 					return
@@ -128,6 +138,13 @@ function M.show_formatted_error(opts)
 
 				-- Update the buffer after each error is processed
 				utils.update_buffer(floating_buf, contents)
+				resolved_count = resolved_count + 1
+
+				if resolved_count < #ts_diagnostics and window == nil then
+					-- We're in lazy mode and not all diagnostics have been rendered
+					-- yet, so avoid creating the window until we know we have all of them
+					return
+				end
 
 				-- Recalculate window size for formatted content
 				local lines = vim.split(contents, "\n")
@@ -138,8 +155,14 @@ function M.show_formatted_error(opts)
 				width = math.min(width, config.get().float_opts.max_width)
 				local height = math.min(#lines, config.get().float_opts.max_height)
 
+				if window == nil then
+					-- If the window is nil, that means we're in lazy window creation mode,
+					-- so initialise it here.
+					window = init_window(main_buf, floating_buf)
+				end
+
 				-- Resize the window with new content
-				api.nvim_win_set_config(win, {
+				api.nvim_win_set_config(window, {
 					relative = "cursor",
 					width = width,
 					height = height,
@@ -159,7 +182,7 @@ function M.show_formatted_error(opts)
 		end
 	end
 
-	return win, floating_buf
+	return window, floating_buf
 end
 
 local error_buf = nil -- Store the buffer reference
