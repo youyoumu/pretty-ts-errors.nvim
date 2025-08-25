@@ -169,17 +169,24 @@ function M.show_formatted_error(opts)
 					row = 1,
 					col = 0,
 				})
+
+				-- after last diagnostic is resolved
+				if resolved_count == #ts_diagnostics then
+					-- HACK: render-markdown.nvim doesn't render the markdown in floating window until the floating window become focused,
+					-- so we re-execute the command to trigger the rendering.
+					-- This somehow also need to be delayed after the window open, not sure why.
+					vim.defer_fn(function()
+						if pcall(require, "render-markdown.state") then
+							local render_markdown_state = require("render-markdown.state")
+							if render_markdown_state.enabled then
+								vim.cmd("RenderMarkdown enable")
+							end
+						end
+					end, 150) -- delay in ms
+				end
+				--
 			end)
 		end)
-	end
-
-	-- HACK: render-markdown.nvim doesn't render the markdown in floating window until the floating window become focused,
-	-- so we re-execute the command to trigger the rendering.
-	if pcall(require, "render-markdown.state") then
-		local render_markdown_state = require("render-markdown.state")
-		if render_markdown_state.enabled then
-			vim.cmd("RenderMarkdown enable")
-		end
 	end
 
 	return window, floating_buf
