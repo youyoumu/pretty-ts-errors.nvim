@@ -1,6 +1,8 @@
+
+
 # pretty-ts-errors.nvim
 
-A Neovim plugin that enhances TypeScript errors by formatting them into readable, markdown-formatted.
+A Neovim plugin that enhances TypeScript errors by formatting them into readable markdown.
 
 <https://github.com/user-attachments/assets/e89fe22b-d1a3-464b-ac44-53f7372cb46f>
 
